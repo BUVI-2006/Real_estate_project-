@@ -10,6 +10,7 @@ app=FastAPI()
 
 file=open('properties.json','r')
 properties=json.load(file)
+file.close()
 
 
 with open("city_listing_count.pkl","rb") as f :
@@ -21,14 +22,14 @@ with open("city_median_map.pkl","rb") as f1:
 with open("max_log_size_sqm.pkl","rb") as f2:
           max_log_size_sqm=pickle.load(f2)
 
-with open("velocity_model.pkl","rb") as model:
-       velocity_model=pickle.load(model)
+with open("velocity_model.pkl","rb") as velocity:
+       velocity_model=pickle.load(velocity)
 
-with open("liquidity_model.pkl","rb") as model1:
-       liquidity_mode1=pickle.load(model1)
+with open("liquidity_model.pkl","rb") as liquidity:
+       liquidity_mode1=pickle.load(liquidity)
 
-with open("ranking_model.pkl","rb") as model2:
-       ranking_model=pickle.load(model2)
+with open("ranking_model.pkl","rb") as ranking:
+       ranking_model=pickle.load(ranking)
 
 
 
@@ -43,7 +44,8 @@ with open("ranking_model.pkl","rb") as model2:
 def index():
     return {'API':"Accessing the real estate ranking system",
             "/properties/top10":"  JSON of top 10 estates",
-             "/properties/all":"JSON of all the estates (1 lakh rows currently)"}
+             "/properties/all":"JSON of all the estates (1 lakh rows currently)",
+             "/predict":"JSON of tree model predictions"}
 
 
 
@@ -63,13 +65,13 @@ def others():
 @app.post('/predict')
 def predict(data:model):
       data=data.model_dump()
-      property_id=data.property_id
-      city=data.city
-      commercial_type=data.commercial_type        
-      size_sqm=data.size_sqm
-      annual_rent=data.annual_rent
-      occupancy_status=data.occupancy_status
-      lease_term_years=data.lease_term_years
+      property_id=data["property_id"]
+      city=data["city"]
+      commercial_type=data["commercial_type"]   
+      size_sqm=data["size_sqm"]
+      annual_rent=data["annual_rent"]
+      occupancy_status=data["occupancy_status"]
+      lease_term_years=data["lease_term_years"]
 
      
       occupancy_status=(1 if occupancy_status=='vacant' else 0)  
@@ -108,9 +110,9 @@ def predict(data:model):
       ranking_score=ranking_model.predict([[log_size_sqm, lease_term_short, city_count, city_median, com_encoded]])[0]
 
       return {
-          "velocity_score":velocity_score,
-          "liquidity_score":liquidity_score,
-          "ranking_score":ranking_score
+          "velocity_score":float(velocity_score),
+          "liquidity_score":float(liquidity_score),
+          "ranking_score":float(ranking_score)
       }
 
 
