@@ -17,8 +17,7 @@ listing=open('city_listing_count.json','r')
 city_count_map=json.load(listing)
 listing.close()
 
-log_size_sqm=open('max_log_size_sqm.json','r')
-max_log_size_sqm=json.load(log_size_sqm)
+
 
 city_median=open('city_median_map.json','r')
 city_median_map=json.load(city_median)
@@ -86,8 +85,11 @@ def predict(data:model):
       com_encoded=com_map.get(commercial_type,-1)
 
       
-
-      rent_sqm=annual_rent/size_sqm
+      if size_sqm>0:
+        rent_sqm=annual_rent/size_sqm
+      else :
+        return {"error":"size_sqm is zero"}
+      
       lease_term_short=1 if lease_term_years<2 else 0
       log_size_sqm=np.log(size_sqm)
 
@@ -98,8 +100,7 @@ def predict(data:model):
       city_median=city_median_map.get(city,global_median)
       city_count=city_count_map.get(city,global_count)
 
-      mispricing_score = abs(rent_sqm - city_median) / city_median
-
+      
     
       
 
