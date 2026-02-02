@@ -43,11 +43,14 @@ def predict(data:model):
       data=data.model_dump()
       property_id=data.property_id
       city=data.city
-      commercial_type=data.commercial_type
+      commercial_type=data.commercial_type        
       size_sqm=data.size_sqm
       annual_rent=data.annual_rent
       occupancy_status=data.occupancy_status
       lease_term_years=data.lease_term_years
+
+      """['Kano', 'Benin City', 'Port Harcourt', 'Enugu', 'Lagos', 'Ibadan',
+       'Owerri', 'Abuja', 'Uyo', 'Calabar']"""
 
       occupancy_status=(1 if occupancy_status=='vacant' else 0)  # array(['office', 'retail_shop', 'showroom', 'warehouse'], dtype=object)
       com_arr=['office', 'retail_shop', 'showroom', 'warehouse']
@@ -55,7 +58,12 @@ def predict(data:model):
       com_map = {value: idx for idx, value in enumerate(com_arr)}
 
       rent_sqm=annual_rent/size_sqm
-      lease_term_short=np.where 
+      lease_term_short=np.where(lease_term_years<2,1,0)
+      log_size_sqm=np.log(size_sqm)
+      
+
+
+
 
 
 
