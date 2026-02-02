@@ -2,4 +2,5 @@ uvicorn
 fastapi
 pydantic
 numpy
+xgboost
 
