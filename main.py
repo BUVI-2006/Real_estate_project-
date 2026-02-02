@@ -3,12 +3,34 @@ from fastapi import FastAPI
 import json 
 from Model import model
 import numpy as np 
+import pickle 
 
 
 app=FastAPI()
 
 file=open('properties.json','r')
 properties=json.load(file)
+
+
+with open("city_listing_count.pkl","rb") as f :
+          city_count_map=pickle.load(f)
+
+with open("city_median_map.pkl","rb") as f1:
+          city_median_map=pickle.load(f1)
+
+with open("max_log_size_sqm.pkl","rb") as f2:
+          max_log_size_sqm=pickle.load(f2)
+
+with open("velocity_model.pkl","rb") as model:
+       velocity_model=pickle.load(model)
+
+with open("liquidity_model.pkl","rb") as model1:
+       liquidity_mode1=pickle.load(model1)
+
+with open("ranking_model.pkl","rb") as model2:
+       ranking_model=pickle.load(model2)
+
+
 
 
 
@@ -49,30 +71,47 @@ def predict(data:model):
       occupancy_status=data.occupancy_status
       lease_term_years=data.lease_term_years
 
-      """['Kano', 'Benin City', 'Port Harcourt', 'Enugu', 'Lagos', 'Ibadan',
-       'Owerri', 'Abuja', 'Uyo', 'Calabar']"""
+     
+      occupancy_status=(1 if occupancy_status=='vacant' else 0)  
 
-      occupancy_status=(1 if occupancy_status=='vacant' else 0)  # array(['office', 'retail_shop', 'showroom', 'warehouse'], dtype=object)
       com_arr=['office', 'retail_shop', 'showroom', 'warehouse']
-      
+
       com_map = {value: idx for idx, value in enumerate(com_arr)}
+      
+      
+
+      com_encoded=com_map.get(commercial_type,-1)
+
+      
 
       rent_sqm=annual_rent/size_sqm
-      lease_term_short=np.where(lease_term_years<2,1,0)
+      lease_term_short=1 if lease_term_years<2 else 0
       log_size_sqm=np.log(size_sqm)
+
+      global_median= np.median(list(city_median_map.values()))
+      global_count = np.median(list(city_count_map.values()))
+
       
 
+      city_median=city_median_map.get(city,global_median)
+      city_count=city_count_map.get(city,global_count)
 
+      mispricing_score = abs(rent_sqm - city_median) / city_median
 
-
-
-
-       
-      
-
-            
-          
     
+      
+
+     
+
+      velocity_score=velocity_model.predict([[rent_sqm, log_size_sqm, city_median, city_count, lease_term_short]])[0]
+      liquidity_score=liquidity_mode1.predict([[rent_sqm, log_size_sqm, lease_term_short, city_count]])[0]
+      ranking_score=ranking_model.predict([[log_size_sqm, lease_term_short, city_count, city_median, com_encoded]])[0]
+
+      return {
+          "velocity_score":velocity_score,
+          "liquidity_score":liquidity_score,
+          "ranking_score":ranking_score
+      }
 
 
 

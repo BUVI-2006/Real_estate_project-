@@ -4,6 +4,8 @@ from pydantic import BaseModel
 
 class model(BaseModel):
 
+    
+
     property_id:str
     city:str
     commercial_type:str
