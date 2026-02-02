@@ -14,10 +14,14 @@ file.close()
 
 
 listing=open('city_listing_count.json','r')
-city_listing_count=json.load(listing)
+city_count_map=json.load(listing)
+listing.close()
 
-with open("max_log_size_sqm.pkl","rb") as f2:
-          max_log_size_sqm=pickle.load(f2)
+log_size_sqm=open('max_log_size_sqm.json','r')
+max_log_size_sqm=json.load(log_size_sqm)
+
+city_median=open('city_median_map.json','r')
+city_median_map=json.load(city_median)
 
 with open("velocity_model.pkl","rb") as velocity:
        velocity_model=pickle.load(velocity)
