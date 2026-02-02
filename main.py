@@ -13,11 +13,8 @@ properties=json.load(file)
 file.close()
 
 
-with open("city_listing_count.pkl","rb") as f :
-          city_count_map=pickle.load(f)
-
-with open("city_median_map.pkl","rb") as f1:
-          city_median_map=pickle.load(f1)
+listing=open('city_listing_count.json','r')
+city_listing_count=json.load(listing)
 
 with open("max_log_size_sqm.pkl","rb") as f2:
           max_log_size_sqm=pickle.load(f2)
@@ -93,7 +90,6 @@ def predict(data:model):
       global_median= np.median(list(city_median_map.values()))
       global_count = np.median(list(city_count_map.values()))
 
-      
 
       city_median=city_median_map.get(city,global_median)
       city_count=city_count_map.get(city,global_count)
