@@ -3,4 +3,5 @@ fastapi
 pydantic
 numpy
 xgboost
+groq
 
