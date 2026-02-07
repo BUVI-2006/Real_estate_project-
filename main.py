@@ -6,7 +6,7 @@ import numpy as np
 import pickle 
 from groq import Groq 
 import os 
-from dotenv import load_dotenv
+
 
 
 
@@ -39,8 +39,6 @@ with open("ranking_model.pkl","rb") as ranking:
 
 
 
-
-load_dotenv()
 
 
 client=Groq(api_key=os.getenv("API_KEY"))
