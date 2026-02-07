@@ -4,6 +4,10 @@ import json
 from Model import model
 import numpy as np 
 import pickle 
+from groq import Groq 
+import os 
+from dotenv import load_dotenv
+
 
 
 app=FastAPI()
@@ -16,6 +20,8 @@ file.close()
 listing=open('city_listing_count.json','r')
 city_count_map=json.load(listing)
 listing.close()
+
+
 
 
 
@@ -34,6 +40,10 @@ with open("ranking_model.pkl","rb") as ranking:
 
 
 
+load_dotenv()
+
+
+client=Groq(api_key=os.getenv("API_KEY"))
 
 
 
@@ -45,7 +55,7 @@ def index():
     return {'API':"Accessing the real estate ranking system",
             "/properties/top10":"  JSON of top 10 estates",
              "/properties/all":"JSON of all the estates (1 lakh rows currently)",
-             "/predict":"JSON of tree model predictions"}
+             "/recommend":"Provides a recommendation based on the calculated scores "}
 
 
 
@@ -62,7 +72,7 @@ def others():
     return properties
 
 
-@app.post('/predict')
+@app.post('/recommend')
 def predict(data:model):
       data=data.model_dump()
       property_id=data["property_id"]
@@ -110,12 +120,58 @@ def predict(data:model):
       liquidity_score=liquidity_mode1.predict([[rent_sqm, log_size_sqm, lease_term_short, city_count]])[0]
       ranking_score=ranking_model.predict([[log_size_sqm, lease_term_short, city_count, city_median, com_encoded]])[0]
 
-      return {
-          "velocity_score":float(velocity_score),
-          "liquidity_score":float(liquidity_score),
-          "ranking_score":float(ranking_score)
-      }
 
+      prompt = f"""
+  You are a market recommendation engine for commercial land assets.
+
+Audience:
+Non-technical buyers and sellers.
+
+Context:
+The following scores are produced by predictive models trained on historical transaction data.
+They indicate relative performance, not exact probabilities.
+
+Rules:
+- Use simple, market-facing language.
+- Use numbers only where they add clarity.
+- Do NOT explain model mechanics.
+- Do NOT convert scores directly into percentages.
+- Avoid technical terms like “distribution”, “quartile”, “median”.
+- Speak in terms of speed, demand, and positioning.
+
+Objective:
+Provide a clear, neutral recommendation that helps both buyers and sellers
+understand how this asset is likely to perform in the market.
+
+Inputs:
+- Velocity Score: {velocity_score}
+- Liquidity Score: {liquidity_score}
+- Ranking Score: {ranking_score}
+
+Output style:
+- 2 to 3 short paragraphs
+- Plain English
+- Calm, factual, confidence-building
+- No hype, no fear, no emotions
+
+
+     """
+
+
+
+      completion=client.chat.completions.create(
+           model="openai/gpt-oss-120b",
+           messages=[
+                {"role":"user","content":prompt}
+           ],
+           temperature=0,
+           top_p=1,
+           max_completion_tokens=500
+      )
+
+      return {
+           "recommendation":completion.choices[0].message.content
+      }
 
 
 
