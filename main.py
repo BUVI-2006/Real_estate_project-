@@ -98,7 +98,7 @@ def predict(data:model):
       lease_term_years=data["lease_term_years"]
 
      
-      occupancy_status=(1 if occupancy_status=='vacant' else 0)  
+      occupancy_status=(1 if occupancy_status.lower()=='vacant' else 0)  
 
       com_arr=['office', 'retail_shop', 'showroom', 'warehouse']
 
