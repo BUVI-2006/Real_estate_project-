@@ -17,7 +17,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  
-        "https://project-wokd.onrender.com"  
+        "https://project-wokd.onrender.com",
+        "https://realstate-drab.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
