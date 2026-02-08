@@ -6,11 +6,26 @@ import numpy as np
 import pickle 
 from groq import Groq 
 import os 
+from fastapi.middleware.cors import CORSMiddleware
 
 
 
 
 app=FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",  
+        "https://project-wokd.onrender.com"  
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+
 
 file=open('properties.json','r')
 properties=json.load(file)
