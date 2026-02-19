@@ -7,23 +7,10 @@ import pickle
 from groq import Groq 
 import os 
 from dotenv import load_dotenv
-from fastapi.middleware.cors import CORSMiddleware
-
 
 
 
 app=FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  
-        "https://project-wokd.onrender.com"  
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 file=open('properties.json','r')
 properties=json.load(file)
@@ -52,8 +39,6 @@ with open("ranking_model.pkl","rb") as ranking:
 
 
 
-
-load_dotenv()
 
 
 client=Groq(api_key=os.getenv("API_KEY"))
@@ -97,7 +82,7 @@ def predict(data:model):
       lease_term_years=data["lease_term_years"]
 
      
-      occupancy_status=(1 if occupancy_status=='vacant' else 0)  
+      occupancy_status=(1 if occupancy_status.lower()=='vacant' else 0)  
 
       com_arr=['office', 'retail_shop', 'showroom', 'warehouse']
 
