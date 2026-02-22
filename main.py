@@ -6,27 +6,17 @@ import numpy as np
 import pickle 
 from groq import Groq 
 import os 
-from dotenv import load_dotenv
+from dotenv import load_dotenv 
+from supabase import create_client 
 
 
+load_dotenv()
 
 app=FastAPI()
 
-file=open('properties.json','r')
-properties=json.load(file)
-file.close()
-
-
-listing=open('city_listing_count.json','r')
-city_count_map=json.load(listing)
-listing.close()
 
 
 
-
-
-city_median=open('city_median_map.json','r')
-city_median_map=json.load(city_median)
 
 with open("velocity_model.pkl","rb") as velocity:
        velocity_model=pickle.load(velocity)
@@ -37,37 +27,31 @@ with open("liquidity_model.pkl","rb") as liquidity:
 with open("ranking_model.pkl","rb") as ranking:
        ranking_model=pickle.load(ranking)
 
+with open("priority_model.pkl","rb") as priority:
+     priority_model=pickle.load(priority)
 
 
+SUPABASE_URL="https://vgvhzoccmvvasdruciks.supabase.co"
+SUPABASE_KEY=os.getenv("db_key")
 
-
+# Transferring the entire data to supabase.
 client=Groq(api_key=os.getenv("API_KEY"))
 
+supabase=create_client(SUPABASE_URL,SUPABASE_KEY)
 
-
-
-# exposing the existing top 10 states (as data is unavailable )
 
 @app.get('/')
 def index():
     return {'API':"Accessing the real estate ranking system",
-            "/properties/top10":"  JSON of top 10 estates",
-             "/properties/all":"JSON of all the estates (1 lakh rows currently)",
-             "/recommend":"Provides a recommendation based on the calculated scores "}
+            "/recommend":"Get all the user details and predict the asset status"}
 
 
 
-
-
-
-@app.get("/properties/top10")
+@app.get("/health")
 def get_top():
     
-    return properties[:10]
+    return {"status":"good"}
 
-@app.get("/properties/all")
-def others():
-    return properties
 
 
 @app.post('/recommend')
@@ -80,6 +64,7 @@ def predict(data:model):
       annual_rent=data["annual_rent"]
       occupancy_status=data["occupancy_status"]
       lease_term_years=data["lease_term_years"]
+      listing_date=data["listing_date"]
 
      
       occupancy_status=(1 if occupancy_status.lower()=='vacant' else 0)  
@@ -87,8 +72,6 @@ def predict(data:model):
       com_arr=['office', 'retail_shop', 'showroom', 'warehouse']
 
       com_map = {value: idx for idx, value in enumerate(com_arr)}
-      
-      
 
       com_encoded=com_map.get(commercial_type,-1)
 
@@ -101,23 +84,72 @@ def predict(data:model):
       lease_term_short=1 if lease_term_years<2 else 0
       log_size_sqm=np.log(size_sqm)
 
-      global_median= np.median(list(city_median_map.values()))
-      global_count = np.median(list(city_count_map.values()))
-
-
-      city_median=city_median_map.get(city,global_median)
-      city_count=city_count_map.get(city,global_count)
-
-      
-    
-      
-
+      try:
+        response=supabase.table("metrics").select("city_median_rent","city_count").eq("city",city).single().execute()
      
+        if response.data:
+            median=response.data["city_median_rent"]
+            count=response.data["city_count"]
 
-      velocity_score=velocity_model.predict([[rent_sqm, log_size_sqm, city_median, city_count, lease_term_short]])[0]
-      liquidity_score=liquidity_mode1.predict([[rent_sqm, log_size_sqm, lease_term_short, city_count]])[0]
-      ranking_score=ranking_model.predict([[log_size_sqm, lease_term_short, city_count, city_median, com_encoded]])[0]
+        else :
+            median=rent_sqm
+            count=1
 
+      except Exception:    # in rare cases 
+          median,count=0,0
+
+
+
+      cols = [
+    "liquidity_score",
+    "velocity_score",
+    "rent_sqm",
+    "city_median_rent_sqm",
+    "city_listing_count",
+    "log_size_sqm",
+    "lease_term_years",
+    "occupancy_status",
+    "commercial_type"
+     ]
+
+      velocity_score=velocity_model.predict([[rent_sqm, log_size_sqm, median, count, lease_term_short]])[0]
+      liquidity_score=liquidity_mode1.predict([[rent_sqm, log_size_sqm, lease_term_short,count]])[0]
+      ranking_score=ranking_model.predict([[log_size_sqm, lease_term_short,count, median, com_encoded]])[0]
+      priority_rank=priority_model.predict([[liquidity_score,velocity_score,rent_sqm,median,count,log_size_sqm,lease_term_years,occupancy_status,com_encoded]])
+
+      if priority_rank==0:
+       priority="Low Priority"
+
+      elif priority_rank==1:
+       priority="Watchlist"
+      
+      elif priority_rank==2:
+       priority="High Priority"
+      
+      else :
+       priority="Immediate Action"
+
+      #Storing in Supabase 
+      user_data={
+          "property_id":property_id,
+          "listing_date":listing_date,
+          "city":city,
+          "commercial_type":commercial_type,
+          "size_sqm":size_sqm,
+          "annual_rent":annual_rent,
+          "occupancy_status":occupancy_status,
+          "lease_term_years":lease_term_years,
+          "rent_sqm":rent_sqm,
+          "priority":priority,  
+      }
+
+      try:
+       supabase.table('properties').insert(user_data).execute()
+       print(f"data entered")
+      except Exception as e:
+    # This will print the exact reason (e.g., "duplicate key value" or "permission denied")
+         print(f"Supabase Error: {e}")
+       
 
       prompt = f"""
   You are a market recommendation engine for commercial land assets.
@@ -145,6 +177,7 @@ Inputs:
 - Velocity Score: {velocity_score}
 - Liquidity Score: {liquidity_score}
 - Ranking Score: {ranking_score}
+- Priority Label:{priority}
 
 Output style:
 - 2 to 3 short paragraphs
@@ -168,7 +201,7 @@ Output style:
       )
 
       return {
-           "recommendation":completion.choices[0].message.content
+           "recommendation":completion.choices[0].message.content           
       }
 
 
