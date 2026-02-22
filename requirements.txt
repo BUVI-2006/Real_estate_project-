@@ -4,4 +4,4 @@ pydantic
 numpy
 xgboost
 groq
-
+supabase
