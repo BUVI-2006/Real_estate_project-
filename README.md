@@ -1,11 +1,12 @@
-#  Real Estate Liquidity Intelligence System
+
+# Real Estate Liquidity Intelligence System
 
 A **machine learning–driven real estate recommendation engine** that evaluates commercial properties based on liquidity, velocity, and market positioning.  
 Designed to assist **buyers and sellers** with clear, data-backed insights on asset performance.
 
 ---
 
-##  Overview
+## Overview
 
 This project builds a **predictive analytics system** for commercial real estate by combining:
 
@@ -24,7 +25,7 @@ The system outputs:
 
 ---
 
-##  Core Features
+## Core Features
 
 ### 1. Multi-Model Prediction Engine
 - Uses 4 trained models:
@@ -52,18 +53,27 @@ Derived features include:
 ### 3. Real-Time API (FastAPI)
 
 #### Base Endpoint
+```
 
 GET /
+
+```
 Returns API info.
 
 #### Health Check
+```
 
 GET /health
+
+```
 Returns system status.
 
 #### Recommendation Endpoint
+```
 
 POST /recommend
+
+````
 
 Accepts property details and returns:
 - AI-generated market recommendation
@@ -88,23 +98,23 @@ Accepts property details and returns:
 
 ## 📊 Prediction Pipeline
 
-1. Input property data received via API
+1. Input property data received via API  
 2. Feature engineering applied:
-   - Encoding
-   - Transformations
-   - Derived metrics
-3. City-level data fetched from Supabase
+   - Encoding  
+   - Transformations  
+   - Derived metrics  
+3. City-level data fetched from Supabase  
 4. Models generate:
-   - Velocity score
-   - Liquidity score
-   - Ranking score
-   - Priority classification
-5. Results passed to LLM
-6. Final recommendation generated in plain English
+   - Velocity score  
+   - Liquidity score  
+   - Ranking score  
+   - Priority classification  
+5. Results passed to LLM  
+6. Final recommendation generated in plain English  
 
 ---
 
-##  Input Schema
+## Input Schema
 
 Example request body:
 
@@ -119,20 +129,32 @@ Example request body:
   "lease_term_years": 3,
   "listing_date": "2026-01-01"
 }
+````
 
-```
-##Output 
+---
+
+## Output
+
+```json
 {
   "recommendation": "This property shows steady market demand..."
 }
+```
 
---- 
-Running the Project
+---
+
+## Running the Project
+
+```bash
 pip install -r requirements.txt
 uvicorn main:app --reload --port 10000
----
-Project Structure
+```
 
+---
+
+## Project Structure
+
+```
 ├── main.py
 ├── Model.py
 ├── velocity_model.pkl
@@ -140,4 +162,8 @@ Project Structure
 ├── ranking_model.pkl
 ├── priority_model.pkl
 ├── .env
+```
+
+---
+
 
