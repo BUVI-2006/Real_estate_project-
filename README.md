@@ -96,7 +96,7 @@ Accepts property details and returns:
 
 ---
 
-## 📊 Prediction Pipeline
+##  Prediction Pipeline
 
 1. Input property data received via API  
 2. Feature engineering applied:
